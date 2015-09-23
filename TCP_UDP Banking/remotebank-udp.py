@@ -26,50 +26,47 @@ def waitForServer(userInput):
 		operation = args[4]
 		amount = args[5]
 
-		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		s.settimeout(2) # set timeout to 2 seconds
 		s.connect((HOST, PORT))
-		s.sendall('authentication request')
-		data = s.recv(1024)
-		if data != "invalid request":
+		s.sendto(user + ':authentication request', (HOST, PORT))
+		data, address = s.recvfrom(1024)
+		if data != "invalid request" and data != "invalid username":
 			if debug:
-				print "user", user
-			s.sendall(user)
-			result = s.recv(1024)
-			if result == "invalid username":
-				print "Invalid username"
+				print "user", user				
+				print "challenge", data	
+			challenge = data
+			md5 = hashlib.md5()
+			md5.update(user + password + challenge)
+			auth = md5.hexdigest()
+			if debug:
+				print "Auth", auth
+			action = operation + "/" + amount
+			s.sendto(user + ':' + auth + ';' + action, (HOST, PORT))
+			result, address = s.recvfrom(1024)
+			if result == "invalid message":
+				print "Error in body of message"
+			elif result == "login failure":
+				print "Error authenticating"
 			else:
-				if debug:
-					print "challenge", data		
-				challenge = data
-				md5 = hashlib.md5()
-				md5.update(user + password + challenge)
-				auth = md5.hexdigest()
-				if debug:
-					print "Auth", auth
-				s.sendall(auth)
-				result = s.recv(1024)
-				if result == "login failure":
-					print "Error authenticating"
-				elif result == "login success":
-					print "Welcome {0}!".format(user)
-					action = operation + ":" + amount
-					s.sendall(action)
-					result = s.recv(1024)
-					if result == "invalid action":
-						print "Invalid action on account"
-					elif result == "invalid amount":
-						print "Value error: amount given is not a number"
-					elif result == "invalid operation":
-						print "Invalid banking operation"
-					elif result == "insufficient funds":
-						print "Insufficient funds. Withdrew remaining funds from account. Balance is $0.00"
+				print "Welcome {0}!".format(user)
+				if result == "invalid action":
+					print "Invalid action on account"
+				elif result == "invalid amount":
+					print "Value error: amount given is not a number"
+				elif result == "invalid operation":
+					print "Invalid banking operation"
+				elif result == "insufficient funds":
+					print "Insufficient funds. Withdrew remaining funds from account. Balance is $0.00"
+				else:
+					if operation == "deposit":
+						print "Successfully deposited ${0} into account. Balance is now ${1}".format(amount, result)
 					else:
-						if operation == "deposit":
-							print "Successfully deposited ${0} into account. Balance is now ${1}".format(amount, result)
-						else:
-							print "Successfully withdrew ${0} from account. Balance is now ${1}".format(amount, result)
-		else:
+						print "Successfully withdrew ${0} from account. Balance is now ${1}".format(amount, result)
+		elif data == "invalid request":
 			print "Invalid request"
+		elif data == "invalid username":
+			print "Invalid username"
 		print "\n"
 		s.close()
 

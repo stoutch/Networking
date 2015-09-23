@@ -1,0 +1,39 @@
+Command: remotebank 127.0.0.1:8591 han solo deposit 10
+Welcome han!
+Successfully deposited $10 into account. Balance is now $10.0
+
+
+Command: remotebank 127.0.0.1:8591 han solo withdraw 5
+Welcome han!
+Successfully withdrew $5 from account. Balance is now $5.0
+
+
+Command: remotebank 127.0.0.1:8591 han solo withdraw 10
+Welcome han!
+Insufficient funds. Withdrew remaining funds from account. Balance is $0.00
+
+
+Command: remotebank 127.0.0.1:8591 han solo 10
+Invalid Arguments
+
+
+Command: remotebank 127.0.0.1 han solo deposit 10
+Invalid address arguments
+
+
+Command: remotebank 127.0.0.1:8591 hope solo deposit 10
+Invalid username
+
+
+Command: remotebank 127.0.0.1:8591 han solocup deposit 10
+Error authenticating
+
+
+Command: remotebank 127.0.0.1:8591 han solo deposit 10million
+Welcome han!
+Value error: amount given is not a number
+
+
+Command: remotebank 127.0.0.1:8591 han solo cup 10
+Welcome han!
+Invalid banking operation

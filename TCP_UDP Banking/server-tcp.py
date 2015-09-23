@@ -3,18 +3,9 @@ import hashlib
 import random
 import socket
 import string
-
-# s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-# s.bind((HOST, PORT))
-# s.listen(1)
-# conn, addr = s.accept()
-# print 'Connected by', addr
-# while 1:
-#     data = conn.recv(1024)
-#     if not data: break
-#     conn.sendall(data)
-# conn.close()
-
+	
+users = {"han": "solo", "darth": "vader", "yo": "da"}
+accounts = {"han": 0.0, "darth": 0.0, "yo": 0.0}
 
 class server_tcp:
 	def __init__(self): # Init takes user input and begins login service
@@ -26,9 +17,7 @@ class server_tcp:
 		print("Login Service Exited")
 
 	def waitForClient(self, userInput):
-		args = userInput.split() # split operators into pieces		
-		users = {"han": "solo", "darth": "vader", "yo": "da"}
-		accounts = {"han": 0.0, "darth": 0.0, "yo": 0.0}
+		args = userInput.split() # split operators into pieces	
 		if(args[0] != "bank-server"):
 			print("Command invalid")
 		else:
@@ -37,7 +26,6 @@ class server_tcp:
 			s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 			s.bind((HOST, PORT))
 			s.listen(5)
-			authenticated = {}
 			while 1:
 				conn, address = s.accept()
 				print "Connected to", address
