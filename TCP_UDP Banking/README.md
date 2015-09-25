@@ -49,3 +49,15 @@ Developed on Windows 10, Python 2.7.10
 * The connection is terminated.
 
 #### UDP
+* The UDP protocol differs in a few ways to the TCP since it is connectionless. Each message sent from the client is prefixed with "username:" so the server knows who it is talking to/if that user/address combination has been authenticated yet.
+* The client begins by sending a "username:authentication request" message to the server. Possible errors:
+	* "invalid request": returned if this is not the initial message received from the server for that user/address combination
+* The server then sends back the MD5 challenge hash. The client then sends back a multipart message:
+	* Part 1: username
+	* Part 2: authentication. MD5 hash of (username + password + challenge)
+	* Part 3: action. combination of operation (deposit/withraw) and amount. Separated by a "/" character.
+	* Parts 1 and 2 are separated by the ":" as before. Parts 2 and 3 are separated by ";"
+	* Example: "han:FJASDFLKJSDFKJWE909SFA09ASH8DF;deposit/25.85"
+* The server receives this, attempts to authenticate, and if successful, performs the operation. All errors related to these actions are the same as in the TCP protocol, however there is the introduction of the "invalid message" error which arises if the body is not well formed. Since we are now sending the challenge and action together, that sequence must be checked.
+* If no error, the server sends back the new account balance
+* The service times out after 5 seconds. If it times out, the client will attempt transmission 3 more times. After that, it will give an error message to the user.

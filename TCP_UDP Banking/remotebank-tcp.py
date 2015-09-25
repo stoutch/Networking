@@ -25,51 +25,56 @@ def waitForServer(userInput):
 		password = args[3]
 		operation = args[4]
 		amount = args[5]
-
-		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		s.connect((HOST, PORT))
-		s.sendall('authentication request')
-		data = s.recv(1024)
-		if data != "invalid request":
-			if debug:
-				print "user", user
-			s.sendall(user)
-			result = s.recv(1024)
-			if result == "invalid username":
-				print "Invalid username"
-			else:
+		try:
+			s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # SOCK_STREAM for TCP
+			s.connect((HOST, PORT))
+			s.sendall('authentication request') # send request for authentication, receive a challenge code
+			data = s.recv(1024)
+			if data != "invalid request":
 				if debug:
-					print "challenge", data		
-				challenge = data
-				md5 = hashlib.md5()
-				md5.update(user + password + challenge)
-				auth = md5.hexdigest()
-				if debug:
-					print "Auth", auth
-				s.sendall(auth)
+					print "user", user
+				s.sendall(user) # send the user to the server so they know what to compare the auth token with
 				result = s.recv(1024)
-				if result == "login failure":
-					print "Error authenticating"
-				elif result == "login success":
-					print "Welcome {0}!".format(user)
-					action = operation + ":" + amount
-					s.sendall(action)
+				if result == "invalid username":
+					print "Invalid username"
+				else:
+					if debug:
+						print "challenge", data	
+					# compute the MD5 hash	
+					challenge = data
+					md5 = hashlib.md5()
+					md5.update(user + password + challenge)
+					auth = md5.hexdigest()
+					if debug:
+						print "Auth", auth
+					s.sendall(auth)
 					result = s.recv(1024)
-					if result == "invalid action":
-						print "Invalid action on account"
-					elif result == "invalid amount":
-						print "Value error: amount given is not a number"
-					elif result == "invalid operation":
-						print "Invalid banking operation"
-					elif result == "insufficient funds":
-						print "Insufficient funds. Withdrew remaining funds from account. Balance is $0.00"
-					else:
-						if operation == "deposit":
-							print "Successfully deposited ${0} into account. Balance is now ${1}".format(amount, result)
+					if result == "login failure":
+						print "Error authenticating"
+					elif result == "login success":
+						# We got in, so now send the action we want to take on the account. sends as "operation:amount"
+						print "Welcome {0}!".format(user)
+						action = operation + ":" + amount
+						s.sendall(action)
+						result = s.recv(1024)
+						# various errors. see server code for more detail
+						if result == "invalid action":
+							print "Invalid action on account"
+						elif result == "invalid amount":
+							print "Value error: amount given is not a number"
+						elif result == "invalid operation":
+							print "Invalid banking operation"
+						elif result == "insufficient funds":
+							print "Insufficient funds. Withdrew remaining funds from account. Balance is $0.00"
 						else:
-							print "Successfully withdrew ${0} from account. Balance is now ${1}".format(amount, result)
-		else:
-			print "Invalid request"
+							if operation == "deposit":
+								print "Successfully deposited ${0} into account. Balance is now ${1}".format(amount, result)
+							else:
+								print "Successfully withdrew ${0} from account. Balance is now ${1}".format(amount, result)
+			else:
+				print "Invalid request"
+		except socket.error: # handles errors like when the server isn't running
+			print "Could not connect to server. Ensure that it is running"
 		print "\n"
 		s.close()
 
@@ -107,6 +112,8 @@ if __name__ == '__main__':
 	
 	if "-d" in args:
 		debug = True
+	else:
+		debug = False
 	if "test" in args:
 		test()
 	else:
